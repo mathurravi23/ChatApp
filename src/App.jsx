@@ -2,8 +2,8 @@ import { withAuthenticator } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import { Amplify } from 'aws-amplify';
 import ChatComponent from './components/ChatComponent';
+import './components/css_file.css';
 
-// Configure Amplify
 const amplifyConfig = {
   Auth: {
     Cognito: {
@@ -19,13 +19,11 @@ Amplify.configure(amplifyConfig);
 
 function App({ signOut, user }) {
   return (
-    <div className="app" align='center'>
-      <header>
-        <h1>Welcome {user.username}</h1>
-        <button onClick={signOut}>Sign out</button>
-      </header>
-      <ChatComponent />
-    </div>
+   <>
+
+      <div className="messages-container">
+        <ChatComponent /></div>
+    </>
   );
 }
 
