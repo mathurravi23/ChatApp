@@ -8,7 +8,7 @@ import pdfToText from 'react-pdftotext';
 import '@aws-amplify/ui-react/styles.css';
 import ImageUpload from './ImageUpload.jsx';
 import './css_file.css';
-import loading_dots from'../../public/loading-dots.svg';
+import loading_dots from'../static/loading-dots.svg';
 
 const amplifyConfig = {
   Auth: {

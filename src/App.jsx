@@ -2,8 +2,8 @@ import { withAuthenticator } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import { Amplify } from 'aws-amplify';
 import ChatComponent from './components/ChatComponent';
-import './components/css_file.css';
 
+// Configure Amplify
 const amplifyConfig = {
   Auth: {
     Cognito: {
@@ -17,14 +17,56 @@ const amplifyConfig = {
 
 Amplify.configure(amplifyConfig);
 
+// Custom sign-up form configuration
+const formFields = {
+  signUp: {
+    username: {
+      order: 1,
+      isRequired: true,
+      placeholder: 'Enter username'
+    },
+    email: {
+      order: 2,
+      isRequired: true,
+      placeholder: 'Enter your email'
+    },
+    password: {
+      order: 3,
+      isRequired: true,
+      placeholder: 'Enter your password'
+    },
+    confirm_password: {
+      order: 4,
+      isRequired: true,
+      placeholder: 'Confirm your password'
+    }
+  }
+};
+
+// Custom components configuration
+const components = {
+  Header() {
+    return (
+      <div style={{ textAlign: 'center', padding: '20px' }}>
+        <h1>GenAI-Assistant</h1>
+        <p>Please sign up or sign in to continue</p>
+      </div>
+    );
+  }
+};
+
 function App({ signOut, user }) {
   return (
-   <>
-
+    <>
       <div className="messages-container">
-        <ChatComponent /></div>
+        <ChatComponent />
+      </div>
     </>
   );
 }
 
-export default withAuthenticator(App);
+export default withAuthenticator(App, {
+  components,
+  formFields,
+  initialState: 'signIn'
+});

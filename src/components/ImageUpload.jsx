@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import '../../public/attachement_img.png';
+import attach from '../static/attachement_img.png';
 
 const ImageUpload = ({ onFileSelect }) => {
   const fileInputRef = useRef(null);
@@ -19,7 +19,7 @@ const ImageUpload = ({ onFileSelect }) => {
     <div>
       {/* Clickable Image */}
       <img
-        src="../../public/attachement_img.png" // Replace with your own image
+        src={attach} // Replace with your own image
         alt="Upload"
         style={{ cursor: "pointer", width: "30px", height: "30px" }}
         onClick={handleImageClick}
