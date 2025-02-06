@@ -9,6 +9,7 @@ import '@aws-amplify/ui-react/styles.css';
 import ImageUpload from './ImageUpload.jsx';
 import './css_file.css';
 import loading_dots from'../static/loading-dots.svg';
+import loading_circles from'../static/loading-circles.svg';
 
 const amplifyConfig = {
   Auth: {
@@ -29,6 +30,7 @@ function ChatComponent({ signOut,user }) {
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isChatLoading, setIsChatLoading] = useState(true);
     const [streamingMessage, setStreamingMessage] = useState('');
     const [chatHistory, setChatHistory] = useState([]);
     const [selectedChat, setSelectedChat] = useState('');
@@ -41,7 +43,8 @@ function ChatComponent({ signOut,user }) {
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
     const [hoveredId, setHoveredId] = useState(null);
-
+    const [inputModel,setInputModel] = useState('nova-micro')
+    
     
     const handleFileChange = async (file) => {
             setIsLoading(true);
@@ -126,7 +129,7 @@ function ChatComponent({ signOut,user }) {
         try {
           const user = await getCurrentUser();
           setUsername(user.username);
-          
+          setIsChatLoading(true)
           setChatHistory([]); //clearing previous chat history to avoid duplicates on refresh
           
           let list_sessions = await fetch_sessions(user.username);
@@ -177,6 +180,8 @@ function ChatComponent({ signOut,user }) {
             
           }
         
+          setIsChatLoading(false)
+           
         }
         catch (error) {
           console.error('Error fetching user info:', error);
@@ -203,9 +208,9 @@ function ChatComponent({ signOut,user }) {
         
         if (!response.ok) {
             throw new Error('Network response was not ok');
+            
         }
         const session_list = await response.json();
-
         return session_list;
         
        }
@@ -254,6 +259,7 @@ function ChatComponent({ signOut,user }) {
   useEffect(() => {
       
       fetchUserInfo();
+
       
     }, []);
 
@@ -304,6 +310,7 @@ function ChatComponent({ signOut,user }) {
         role: 'user',
         timestamp: new Date().toISOString(),
       };
+      
             // set chat id on submit if no chat id selected. chat id would require in the API call to Lambda function/DDB.
             let chatsessionid= '000'
             if(selectedChat && selectedTitle)
@@ -327,14 +334,14 @@ function ChatComponent({ signOut,user }) {
                           'Content-Type': 'application/json',
                       },
                      mode:'cors',
-                      body: JSON.stringify({user_msg: inputMessage + pdfText,user_id:user.username, chat_id:chatsessionid})
+                      body: JSON.stringify({user_msg: inputMessage +' '+ pdfText,user_id:user.username, chat_id:chatsessionid,user_model:inputModel})
                   });
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
     
                 const data = await response.json();
-          
+               
                 const aiMessage = {
                     content: parse(data.response),
                     role: 'assistant',
@@ -362,21 +369,24 @@ function ChatComponent({ signOut,user }) {
       } else {
 
         
-        setChatHistory(prev => prev.map(chat => {
-          if (chat.id === selectedChat) 
-              {
-                return {
-                  ...chat,
-                  messages: [...chat.messages, userMessage, aiMessage],
-                  timestamp: new Date().toISOString(), // Update timestamp for latest activity
-                  title: chat.messages.length === 0 ? // Update title only if it's the first message
-                    (inputMessage.slice(0, 30) + (inputMessage.length > 30 ? '...' : '')) :
-                    chat.title
-                };
-              }
-          return chat;
-          }
-        ));
+
+          setChatHistory(prev => prev.map(chat => {
+            if (chat.id === selectedChat) 
+                {
+                  return {
+                    ...chat,
+                    messages: [...chat.messages, userMessage, aiMessage],
+                    timestamp: new Date().toISOString(), // Update timestamp for latest activity
+                    title: chat.messages.length === 0 ? // Update title only if it's the first message
+                      (inputMessage.slice(0, 30) + (inputMessage.length > 30 ? '...' : '')) :
+                      chat.title
+                  };
+                }
+            return chat;
+            }
+          ))
+        
+        
       }       
 
         setInputMessage(''); // to clear text box message after submitting
@@ -424,15 +434,21 @@ function ChatComponent({ signOut,user }) {
   return (
      
     <div className="app-container">
-     
       <div className="nav-sidebar">
         
       {chatHistory.length >0 ? ( <button className="new-chat-btn" onClick={startNewChat} disabled={isLoading} >
           Start New Conversation
         </button>):null
       }
+      
+
         <div className="chat-history">
-         {  
+                {isChatLoading ? 
+        
+        ( <img src={loading_circles} width={40}/>
+        ):
+        (
+        
           chatHistory.map((chat) => (
             <div
               key={chat.id}
@@ -457,10 +473,13 @@ function ChatComponent({ signOut,user }) {
             </div>
              
           ))
-            }
+             
   
-          
+           )
+        }
         </div>
+        
+       
         <button   onClick={signOut}>Sign out</button>
       </div>
 
@@ -518,29 +537,37 @@ function ChatComponent({ signOut,user }) {
           <div ref={messagesEndRef} />
         </div>
         
-        <form onSubmit={handleSubmit} className="input-form">
-          <input
-            type="textarea"
-            ref={inputRef} 
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            placeholder="Ask me anything..."
-            className="message-input"
-            disabled={isLoading}
-            style={{ 
-                height: '60px', 
-                width: '200px' 
-              }}
-          />
-         
-             <ImageUpload onFileSelect={handleFileChange} />
-             
-            
-          <button type="submit" className="send-button" disabled={isLoading}>
-            {isLoading ? 'Loading...' : 'Send'}
-          </button>
-            {selectedFile &&  <div className="error-message">{selectedFile['name']}</div>}
-            {fileError && <div className="error-message">{fileError}</div>}
+        <form onSubmit={handleSubmit}  className='input-form'>
+         <div className="input-container" >
+                  <input
+                    type="textarea"
+                    ref={inputRef} 
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    placeholder="Ask me anything..."
+                    className="message-input"
+                    disabled={isLoading}
+                    style={{ 
+                        height: '60px', 
+                        width: '200px' 
+                      }}
+                  />
+                 
+                     <ImageUpload onFileSelect={handleFileChange} />
+                     
+                   
+                  <button type="submit" className="send-button" disabled={isLoading}>
+                    {isLoading ? 'Loading...' : 'Send'}
+                  </button>
+                    {selectedFile &&  <div className="error-message">{selectedFile['name']}</div>}
+                    {fileError && <div className="error-message">{fileError}</div>}
+  
+         </div> Amazon Bedrock Model:
+            <select name="models" id="models" onChange={(e) => setInputModel(e.target.value)}>
+              <option value="nova-micro">Amazon Nova Micro</option>
+              <option value="claude-sonnet-35">Anthropic Claude 3.5 Sonnet</option>
+            </select>
+     
         </form> 
        
         <p className='para' align='center'>GenAI Assistant can make mistakes. Verify important informations.</p>

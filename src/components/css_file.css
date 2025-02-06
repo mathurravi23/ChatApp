@@ -125,10 +125,13 @@
   .input-form {
     padding: 16px;
     border-top: 1px solid #dee2e6;
-    display: flex;
     gap: 8px;
   }
-
+ .input-container {
+    padding: 6px;
+    display: flex;
+   
+  }
   .message-input {
     flex: 1;
     padding: 12px;
