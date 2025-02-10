@@ -507,11 +507,11 @@ function ChatComponent({ signOut,user }) {
                 </div>
            )): <div className="message ai-message"><h2 align='center'> Hello <i>{user.username}</i>👋 </h2>
             
-                I'm an <b> genAI assistant</b>, and I'm here to assist you with any questions or tasks you might have. 
-                <br />Here's how I can help:
+                I'm an <b> GenAI assistant</b>, and I'm here to assist you with any questions or tasks you might have. 
+                <br />Here are some examples how I can help:
                 <br />
                 <ul>
-                <li><b>Information Lookup:</b> Need to find information on a specific topic? Just ask me, and I'll provide relevant details from my vast knowledge base.</li>
+                <li><b>Information Lookup:</b> Need to find information on a specific topic? Just ask me, and I'll provide relevant details.</li>
                 <li><b>Webpage Summarization:</b> Just provide me URL of webpage and I can summarize its content for you.</li>
                 <li><b>Document Insights</b> You can upload pdf files and I can provide you chat assistant to get deeper insights.</li>
                 <li><b>Personalized Recommendations:</b> Based on your preferences and interests, I can suggest products, services, or entertainment options tailored just for you.</li>

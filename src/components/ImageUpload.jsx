@@ -19,7 +19,7 @@ const ImageUpload = ({ onFileSelect }) => {
     <div>
       {/* Clickable Image */}
       <img
-        src={attach} // Replace with your own image
+        src={attach} 
         alt="Upload"
         style={{ cursor: "pointer", width: "30px", height: "30px" }}
         onClick={handleImageClick}
