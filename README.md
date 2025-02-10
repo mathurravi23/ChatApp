@@ -15,7 +15,7 @@
 
 ## Overview 
 
-This GenAI assistant is designed to provide a wide range of functionalities to enhance your productivity and knowledge acquisition. It can summarize web pages to give you concise overviews of lengthy articles or reports, saving you time and effort. It offers document insights by extracting key information and providing summaries, making it easier to understand complex documents. The assistant can perform information lookup to fetch relevant data on various topics, helping you find the information you need quickly. Additionally, it provides advice based on your queries, offering guidance on a variety of subjects. For those needing assistance with different languages, it offers language translation services to communicate across linguistic barriers. Overall, this GenAI assistant is a versatile tool to support your research, learning, and communication needs.
+This GenAI assistant is designed to provide a wide range of functionalities to enhance your productivity and knowledge acquisition. It can summarize web pages to give you concise overviews of lengthy articles or reports, saving you time and effort. It offers pdf document insights by extracting key information and providing summaries, making it easier to understand complex documents. The assistant can perform information lookup to fetch relevant data on various topics, helping you find the information you need quickly. Additionally, it provides advice based on your queries, offering guidance on a variety of subjects. For those needing assistance with different languages, it offers language translation services to communicate across linguistic barriers. Overall, this GenAI assistant is a versatile tool to support your research, learning, and communication needs.
 
 ### Architecture
 
@@ -131,8 +131,8 @@ If the build does not start automatically, trigger it through the Amplify consol
 ### Running with Amazon Amplify hosting
 
 1. In the [AWS Console](https://aws.amazon.com/console/), navigate to  Amazon CloudFormation  and select CloudFormation stack deployed as part of this guidance. Navigate to 'output' tab.
- ![Amazon CloudFormation Parameters](images/CFN-output.png)
-2. Click on Amplify App URL to access the deployed solution. For the first time user, switch to 'Create Account' table and follow the instructions to create new user account.
+ ![Amazon CloudFormation Output](images/CFN_output.png)
+2. Click on Amplify App URL to access the deployed solution. For the first time user, switch to 'Create Account' tab and follow the instructions to create new user account.
  ![Amazon Amplify Hosting](images/Amplify_hosting_1.png)
 
 3. After successful login, you will be presented to the main page of GenAI Assistant.
@@ -166,7 +166,7 @@ VITE_USER_POOL_CLIENT_ID="xxxxxx"
 VITE_API_GATEWAY_ENDPOINT="https://xxxx.execute-api.us-east-1.amazonaws.com/dev/dev"
 ```
 
-4. Next, install the frontend's dependencies by running the following command:
+4. Next, install the dependencies by running the following command:
 
 ```bash
 npm ci
@@ -178,7 +178,7 @@ npm ci
 npm run dev
 ```
 
-Vite will now start the application under `http://localhost:8080`.
+Vite will now start the application under `http://localhost:8080`. You can modify the port by updating [Vite configuration file](vite.config.js).
 
 
 
