@@ -86,7 +86,7 @@ _You are responsible for the cost of the AWS services used while running this Gu
     -   Create a GitHub fine-grained access token for the new repository by following [this guide](https://docs.aws.amazon.com/amplify/latest/userguide/setting-up-GitHub-access.html). Refer section **Generate a personal access token in your GitHub account**.
 
 
-2. Download Amazon [Lambda function](src/assets/genai-assistant-lambda-function.zip) and [Amazon Lambda dependencies]((src/assets/genai-assistant-backend_layer.zip) and upload to your Amazon S3 bucket in same AWS Region where you will deploy this solution.
+2. Download Amazon [Lambda function](src/assets/genai-assistant-lambda-function.zip) and [Amazon Lambda dependencies](src/assets/genai-assistant-backend_layer.zip) and upload to your Amazon S3 bucket in same AWS Region where you will deploy this solution.
 3. Download AWS CloudFormation template [guidance-for-genai-assistant.yaml](guidance-for-genai-assistant.yaml) from the GitHub repository to your local system. Update your Amazon S3 bucket name for Amazon Lambda function code and Lambda Layer.
 
    ```json
