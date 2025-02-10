@@ -27,7 +27,7 @@ This GenAI assistant is designed to provide a wide range of functionalities to e
    - Amazon Cognito create and manage user profiles.
    - User interact with application (GenAI Assistant) for chat assistance and/or summarization of web documents, PDFs etc. 
    - At start a user submit messages using front-end application. These user messages can optionally include PDF files.
-   - User have choice to select Amazon Bedrock Model - Amazon Nova Micro or Anthropic Claude. By default, this application uses Amazon Nova Micro model.
+   - User have choice to select Amazon Bedrock Model - **Amazon Nova Micro** or **Anthropic Claude**. By default, this application uses Amazon Nova Micro model.
    - User messages are sent to Amazon Lambda function via Amazon API Gateway.
    - Amazon Lambda does the backend processing of user input. It analyze the user query and accordingly pull chat history from Amazon DynamoDB table.
    - A LLM chain is created with user chat history and new message. This LLM chain is then submitted to Amazon Bedrock for response generation.
@@ -80,10 +80,10 @@ _You are responsible for the cost of the AWS services used while running this Gu
 1. You have option to host front-end of this solution locally or on [AWS Amplify](https://aws.amazon.com/amplify/hosting/). [AWS Amplify Hosting](https://aws.amazon.com/amplify/hosting/) enables a fully-managed deployment of the application's React frontend in an AWS-managed account using Amazon S3 and [Amazon CloudFront](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Introduction.html).  You can choose this option during Amazon CloudFormation stack deployment.
 
 
-To set up Amplify Hosting:
+    **Follow below two steps only to set up Amplify Hosting:**
 
--   Fork this GitHub repository and take note of your repository URL, refer `https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo`.
--   Create a GitHub fine-grained access token for the new repository by following [this guide](https://docs.aws.amazon.com/amplify/latest/userguide/setting-up-GitHub-access.html). Refer section **Generate a personal access token in your GitHub account**.
+    -   Fork this GitHub repository and take note of your repository URL, refer (https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo).
+    -   Create a GitHub fine-grained access token for the new repository by following [this guide](https://docs.aws.amazon.com/amplify/latest/userguide/setting-up-GitHub-access.html). Refer section **Generate a personal access token in your GitHub account**.
 
 
 2. Download Amazon Lambda function and Amazon Lambda dependencies and upload to your Amazon S3 bucket in same AWS Region where you will deploy this solution.
@@ -105,20 +105,20 @@ To set up Amplify Hosting:
 
 2. Navigate to output tab and review deployed resources
 
- ![Amazon CloudFormation Parameters](images/CFN-input.png)
+ ![Amazon CloudFormation Output](images/CFN_output.png)
 
 
 3. If you selected to deploy the frontend using Amazon Amplify Hosting, navigate to the Amplify console to check the build status. 
 
- ![Amazon CloudFormation Parameters](images/AmplifyRunJob1.png)
+ ![Amazon Amplify App](images/AmplifyRunJob1.png)
 
 If the build does not start automatically, trigger it through the Amplify console.
 
- ![Amazon CloudFormation Parameters](images/AmplifyRunJob2.png)
+ ![Amazon Amplify RunJob](images/AmplifyRunJob2.png)
 
 4. Validate environment variables setup for the Amplify App hosting
 
- ![Amazon CloudFormation Parameters](images/Amplify_Env_variables.png)
+ ![Amazon Amplify Environment Variables](images/Amplify_Env_variables.png)
 
 
 5. If you selected to run the frontend locally and connect to the deployed resources in AWS, use the CloudFormation stack outputs to verify deployed resources.
