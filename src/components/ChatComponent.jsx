@@ -55,7 +55,7 @@ function ChatComponent({ signOut,user }) {
                   // Check file size (e.g., limit to 100KB)
               const allowedTypes = {
                   'application/pdf': {
-                    maxSize: 100 * 1024, // 100KB for PDFs
+                    maxSize: 200 * 1024, // 100KB for PDFs
                     label: 'PDF'
                   },
                   'audio/mpeg': {

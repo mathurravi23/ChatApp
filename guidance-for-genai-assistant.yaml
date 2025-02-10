@@ -1,0 +1,325 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Deploy GenAI-Assistant solution on AWS.
+
+Parameters:
+  TokenGithubOauth:
+    Type: String
+    NoEcho: true
+    Description: GitHub OAuth token for Amplify to access the repository (Required
+      if HostingOption is Amplify)
+    Default: dummy-token
+
+  HostingOption:
+    Type: String
+    AllowedValues:
+      - local
+      - Amplify
+    Default: Amplify
+    Description: Choose 'local' for local development or 'Amplify' for Amplify hosting
+
+  RepositoryUrlGithub:
+    Type: String
+    Description: 'GitHub repository URL (Required if HostingOption is Amplify).
+      Format: https://github.com/username/repository'
+    Default: dummy-repo
+
+Conditions:
+  DeployAmplify: !Equals
+    - !Ref HostingOption
+    - Amplify
+
+Resources:
+  # DynamoDB Table
+  GenAITable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: GenAI-Table
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+
+  # Lambda Layer
+  LambdaLayer:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      LayerName: genai-assistant-layer
+      Content:
+        S3Bucket: <YOUR AMAZON S3 BUCKET NAME> 
+        S3Key: genai-assistant-backend_layer.zip
+      CompatibleRuntimes:
+        - python3.9
+      Description: Layer for genai-assistant lambda function dependencies
+
+  # Lambda Execution Role
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: GenAI-Lambda-ExecutionRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: FullDynamoDBAndBedrockAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: dynamodb:*
+                Resource: '*'
+              - Effect: Allow
+                Action: bedrock:*
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+
+  # Lambda Function
+  GenAILambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: GenAI-Assistant-Backend
+      Runtime: python3.9
+      Handler: lambda_function.lambda_handler
+      Timeout: 60
+      Code:
+        S3Bucket: <YOUR AMAZON S3 BUCKET NAME> 
+        S3Key: genai-assistant-lambda-function.zip
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          table_name: !Ref GenAITable
+      Layers:
+        - !Ref LambdaLayer
+
+  # API Gateway REST API
+  GenAIApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: GenAI-API
+
+  # API Gateway Resource
+  GenAIResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt GenAIApi.RootResourceId
+      PathPart: genai
+      RestApiId: !Ref GenAIApi
+
+  # API Gateway OPTIONS Method (CORS)
+  GenAIOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: OPTIONS
+      ResourceId: !Ref GenAIResource
+      RestApiId: !Ref GenAIApi
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: '200'
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: '''*'''
+              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST'''
+              method.response.header.Access-Control-Allow-Headers: '''*'''
+            ResponseTemplates:
+              application/json: ''
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{ "statusCode": 200 }'
+      MethodResponses:
+        - StatusCode: '200'
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Headers: true
+
+  # API Gateway POST Method
+  GenAIPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      ResourceId: !Ref GenAIResource
+      RestApiId: !Ref GenAIApi
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GenAILambdaFunction.Arn}/invocations
+      MethodResponses:
+        - StatusCode: '200'
+
+  # Deploy API Gateway Stage
+  GenAIDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref GenAIApi
+      StageName: dev
+    DependsOn:
+      - GenAIPostMethod
+      - GenAIOptionsMethod
+
+  # Lambda Permission for API Gateway
+  LambdaApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GenAILambdaFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${GenAIApi}/*/POST/genai
+
+  # Cognito User Pool
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: GenAIUserPool
+      AutoVerifiedAttributes:
+        - email
+      AliasAttributes:
+        - email
+      UsernameConfiguration:
+        CaseSensitive: false
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Required: true
+          Mutable: true
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 6
+      VerificationMessageTemplate:
+        DefaultEmailOption: CONFIRM_WITH_CODE
+
+  # Cognito User Pool Client
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: GenAIUserPoolClient
+      UserPoolId: !Ref CognitoUserPool
+      GenerateSecret: false
+
+  AmplifyServiceRole:
+    Type: AWS::IAM::Role
+    Condition: DeployAmplify
+    Properties:
+      RoleName: !Sub "AmplifySSRServiceRole-${AWS::StackName}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - amplify.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: !Sub "AmplifySSRPolicy-${AWS::StackName}"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "amplify:*"
+                  - "s3:*"
+                  - "codecommit:*"
+                  - "cloudfront:CreateInvalidation"
+                  - "iam:PassRole"
+                  - "lambda:InvokeFunction"
+                Resource: "*"
+
+  # Amplify App with Service Role
+  AmplifyApp:
+    Type: "AWS::Amplify::App"
+    Condition: DeployAmplify
+    Properties:
+      Name: "GenAI-Assistant-Frontend"
+      Repository: !Ref RepositoryUrlGithub
+      OauthToken: !Ref TokenGithubOauth
+      IAMServiceRole: !GetAtt AmplifyServiceRole.Arn
+      EnableBranchAutoDeletion: true
+      BuildSpec: |
+        version: 1
+        frontend:
+          phases:
+            preBuild:
+              commands:
+                - npm ci
+            build:
+              commands:
+                - npm run build
+          artifacts:
+            baseDirectory: dist
+            files:
+              - '**/*'
+          cache:
+            paths:
+              - node_modules/**/*
+      EnvironmentVariables:
+        - Name: VITE_API_GATEWAY_ENDPOINT
+          Value: !Sub "https://${GenAIApi}.execute-api.${AWS::Region}.amazonaws.com/dev/genai"
+        - Name: VITE_AWS_REGION
+          Value: !Ref "AWS::Region"
+        - Name: VITE_USER_POOL_CLIENT_ID
+          Value: !Ref CognitoUserPoolClient
+        - Name: VITE_USER_POOL_ID
+          Value: !Ref CognitoUserPool
+      CustomRules:
+        - Source: "</^[^.]+$|\\.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|woff2|ttf|map|json)$)([^.]+$)/>"
+          Target: "/index.html"
+          Status: "200"
+
+  # Amplify Branch with Auto Build
+  AmplifyBranch:
+    Type: AWS::Amplify::Branch
+    Condition: DeployAmplify
+    Properties:
+      AppId: !GetAtt AmplifyApp.AppId
+      BranchName: main
+      EnableAutoBuild: true
+
+Outputs:
+  CognitoUserPoolId:
+    Description: Cognito User Pool ID
+    Value: !Ref CognitoUserPool
+
+  CognitoUserPoolClientId:
+    Description: Cognito User Pool Client ID
+    Value: !Ref CognitoUserPoolClient
+
+  ApiInvokeURL:
+    Description: Invoke URL for the GenAI API Gateway
+    Value: !Sub https://${GenAIApi}.execute-api.${AWS::Region}.amazonaws.com/dev/genai
+
+  DynamoDBTableName:
+    Description: DynamoDB Table Name
+    Value: !Ref GenAITable
+
+  LambdaFunction:
+    Description: Lambda function name
+    Value: !Ref GenAILambdaFunction
+
+  AmplifyAppURL:
+    Condition: DeployAmplify
+    Description: Amplify App URL
+    Value: !Sub https://${AmplifyBranch.BranchName}.${AmplifyApp.DefaultDomain}
+
+  MainBranchURL:
+    Condition: DeployAmplify
+    Description: Main Branch URL
+    Value: !Sub https://main.${AmplifyApp.DefaultDomain}
